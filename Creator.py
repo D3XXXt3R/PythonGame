@@ -1,6 +1,7 @@
 import pygame, sys, os
 from pygame.locals import *
 from Bullet import *
+from Enemy import *
 
 HEIGHT = 720
 WIDTH = 1024
@@ -11,7 +12,15 @@ class Creator(object):
     def __init__(self):
         pass
 
-    def runMenu(self):
+    # pętla generująca macierz przeciwników
+    def generate_enemies(self):
+        matrix = []
+        for y in range(5):
+            enemies = [Enemy(80 + (40 * x), 50 + (50*y)) for x in range(11)]
+            matrix.append(enemies)
+        return matrix
+
+    def run_menu(self):
 
         pygame.init()
         # create game window
@@ -97,7 +106,7 @@ class Creator(object):
                         pygame.display.flip()
                         # print(str(mouse_x) + " " + str(mouse_y))
 
-    def runAbout(self):
+    def run_about(self):
         while True:
             pygame.init()
 
@@ -140,16 +149,19 @@ class Creator(object):
                         screen.blit(back, (150, 400))
                         pygame.display.flip()
 
-    def runNewGame(self):
+    def run_new_game(self):
 
         pygame.init()
 
         bullets_array = []
+        enemies_matrix = self.generate_enemies()
         can_shoot = True
         fire_wait = 500
 
         player_x = 300
         player_y = 300
+
+        moving = False
 
         # create game window
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -219,4 +231,19 @@ class Creator(object):
                 bullet.update()
                 if bullet.y < 0:
                     bullets_array.remove(bullet)
+
+            for enemies in enemies_matrix:
+                for enemy in enemies:
+                    if enemies[-1].x > 695:
+                        dirx = -1
+                        moving = True
+                        enemy.update(screen, 0, 5)
+                    elif enemies[0].x < 0:
+                        dirx = 1
+                        moving = True
+                        enemy.update(screen, 0, 5)
+                    elif not moving:
+                        dirx = 1
+                    enemy.update(screen, dirx)
+
             pygame.display.update()

@@ -10,7 +10,7 @@ class MainMenu(object):
 
     def run(self):
         cr = Creator()
-        cr.runMenu()
+        cr.run_menu()
 
 if __name__ == "__main__":
 

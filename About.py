@@ -10,4 +10,4 @@ class About(object):
 
     def run(self):
         cr = Creator()
-        cr.runAbout()
+        cr.run_about()

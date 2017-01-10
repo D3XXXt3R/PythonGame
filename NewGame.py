@@ -7,4 +7,4 @@ class NewGame(object):
 
     def run(self):
         cr = Creator()
-        cr.runNewGame()
+        cr.run_new_game()
