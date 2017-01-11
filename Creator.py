@@ -1,24 +1,44 @@
+import random
+
 import pygame, sys, os
 from pygame.locals import *
 from Bullet import *
 from Enemy import *
+from EnemyBullet import EnemyBullet
 
 HEIGHT = 720
 WIDTH = 1024
 MENU = ("New Game", "Options", "About", "Exit")
+SCORE = 0  # here we count score
+LIFE = 3  # player life
 
 
 class Creator(object):
-    def __init__(self):
-        pass
+    def __init__(self, score=SCORE, life=LIFE):
+        self.score = score
+        self.enemies_bullets = []
+        self.life = life
 
-    # pętla generująca macierz przeciwników
+    """generate enemy"""
+
     def generate_enemies(self):
         matrix = []
         for y in range(5):
-            enemies = [Enemy(80 + (40 * x), 50 + (50*y)) for x in range(11)]
+            if y == 0:
+                points = 30
+            elif y == 1 or y == 2:
+                points = 20
+            else:
+                points = 10
+            enemies = [Enemy(80 + (50 * x), 50 + (60 * y), points) for x in range(11)]
             matrix.append(enemies)
         return matrix
+
+    def check_collision(self, object1_x, object1_y, object2_x, object2_y):
+        return (
+            (object1_x > object2_x) and (object1_x < object2_x+100) and
+            (object1_y > object2_y) and (object1_y < object2_y+100)
+        )
 
     def run_menu(self):
 
@@ -32,9 +52,7 @@ class Creator(object):
         pygame.mixer.init()
         pygame.mixer.music.load(file)
         pygame.mixer.music.play()
-        # pobieramy informacje o ekranie - tle
         screen = pygame.display.get_surface()
-        # przypisanie grafiki do określonego miejsca ekranu
         screen.blit(background, (0, 0))
 
         i = 0
@@ -130,7 +148,6 @@ class Creator(object):
             back = myfont.render("Back", False, (150, 120, 232))
             screen.blit(back, (150, 400))
             pygame.display.flip()
-
             for event in pygame.event.get():
                 if event.type == QUIT:
                     sys.exit(0)
@@ -152,14 +169,15 @@ class Creator(object):
     def run_new_game(self):
 
         pygame.init()
-
+        enemy_can_shoot = True
+        enemy_fire_wait = 1500
         bullets_array = []
         enemies_matrix = self.generate_enemies()
         can_shoot = True
         fire_wait = 500
 
-        player_x = 300
-        player_y = 300
+        player_x = 400
+        player_y = 650
 
         moving = False
 
@@ -178,7 +196,8 @@ class Creator(object):
 
         # pygame.display.flip()
         while True:
-
+            fire_wait -= CLOCK.tick(60)
+            enemy_fire_wait -= CLOCK.tick(60)
             for event in pygame.event.get():
                 if event.type == QUIT:
                     sys.exit(0)
@@ -197,10 +216,11 @@ class Creator(object):
                         bullet = Bullet(screen, player_x, player_y)
                         bullets_array.append(bullet)
                         can_shoot = False
+
                     if not can_shoot and fire_wait <= 0:
                         can_shoot = True
                         fire_wait = 500
-                    fire_wait -= CLOCK.tick(60)
+
                 if event.type == MOUSEBUTTONDOWN:
                     mouse_x, mouse_y = event.pos
                     if 152 < mouse_x < 214 and 407 < mouse_y < 438:
@@ -227,14 +247,16 @@ class Creator(object):
 
             screen.blit(background, (0, 0))
             screen.blit(player, (player_x, player_y))
-            for bullet in bullets_array:
-                bullet.update()
-                if bullet.y < 0:
-                    bullets_array.remove(bullet)
+            score_label = myfont.render("Score: {}".format(self.score), 1, (255, 0, 0))
+            screen.blit(score_label, (25, 575))
 
+            life_label = myfont.render("Life: {}".format(self.life), 1, (255, 0, 0))
+            screen.blit(life_label, (750, 575))
+
+            # loop where we update enemy move
             for enemies in enemies_matrix:
                 for enemy in enemies:
-                    if enemies[-1].x > 695:
+                    if enemies[-1].x > 990:
                         dirx = -1
                         moving = True
                         enemy.update(screen, 0, 5)
@@ -245,5 +267,38 @@ class Creator(object):
                     elif not moving:
                         dirx = 1
                     enemy.update(screen, dirx)
+
+            if enemy_can_shoot:
+                flat_list = [enemy for enemies in enemies_matrix for enemy in enemies]
+                random_enemy = random.choice(flat_list)
+                enemy_bullet = EnemyBullet(screen, random_enemy.x, random_enemy.y)
+                self.enemies_bullets.append(enemy_bullet)
+                enemy_can_shoot = False
+
+            if not enemy_can_shoot and enemy_fire_wait <= 0:
+                enemy_fire_wait = 1500
+                enemy_can_shoot = True
+
+            for enemy_bullet in self.enemies_bullets:
+                enemy_bullet.update()
+                if enemy_bullet.x > 990:
+                    self.enemies_bullets.remove(enemy_bullet)
+
+                if self.check_collision(enemy_bullet.x, enemy_bullet.y, player_x,
+                                        player_y) and enemy_bullet in self.enemies_bullets:
+                    self.enemies_bullets.remove(enemy_bullet)
+                    self.life -= 1
+
+            for bullet in bullets_array:
+                bullet.update()
+                if bullet.y < 0:
+                    bullets_array.remove(bullet)
+                for enemies in enemies_matrix:
+                    for enemy in enemies:
+                        if (self.check_collision(bullet.x, bullet.y, enemy.x, enemy.y)
+                            and bullet in bullets_array):
+                            self.score += enemy.points
+                            enemies.remove(enemy)
+                            bullets_array.remove(bullet)
 
             pygame.display.update()

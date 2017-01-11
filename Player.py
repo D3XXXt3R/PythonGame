@@ -1,15 +1,14 @@
 import pygame
 
-"""enemy class"""
+"""Player class"""
 
 
-class Enemy:
-    def __init__(self, x_coord, y_coord, points):
+class Player:
+    def __init__(self, x_coord, y_coord):
         self.x = x_coord
         self.y = y_coord
-        self.image = pygame.image.load('Game_Art/enemy.png')
+        self.image = pygame.image.load("Game_Art/ship.png")
         self.speed = 2
-        self.points = points  # enemy value
         return
 
     """update enemy position"""

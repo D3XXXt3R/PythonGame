@@ -1,7 +1,9 @@
-from  Creator import *
+from Creator import *
+
+"""New game Class"""
+
 
 class NewGame(object):
-
     def __init__(self):
         pass
 
