@@ -4,11 +4,11 @@ import pygame
 
 
 class Enemy:
-    def __init__(self, x_coord, y_coord, points):
+    def __init__(self, image, x_coord, y_coord, points, speed):
         self.x = x_coord
         self.y = y_coord
-        self.image = pygame.image.load('Game_Art/enemy.png')
-        self.speed = 2
+        self.image = pygame.image.load('Game_Art/'+image+'.png')
+        self.speed = speed
         self.points = points  # enemy value
         return
 
