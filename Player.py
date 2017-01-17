@@ -8,7 +8,7 @@ class Player:
         self.x = x_coord
         self.y = y_coord
         self.image = pygame.image.load("Game_Art/ship.png")
-        self.speed = 5
+        self.speed = 2
         self.hit_countdown = 0
         self.timer = 0
         self.up = True

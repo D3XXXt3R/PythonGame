@@ -30,12 +30,14 @@ class Creator(object):
         self.screen = pygame.display.get_surface()
         self.life = life
         self.player_hit = 0
+        self.player_speed = 2
         self.change_x = 0
         self.change_y = 0
         self.level = 0
         self.enemy_level = 0
         self.enemy_speed = 4
         self.bonus = 0
+        self.bonus_number = 0
 
     def generate_random_coordinates(self):
         return random.randrange(40, WIDTH - 40)
@@ -85,7 +87,7 @@ class Creator(object):
         while True:
             for event in pygame.event.get():
                 if event.type == KEYDOWN:
-                    if event.key == K_RETURN:
+                    if event.key == K_RETURN or event.key == K_y:
                         self.run_new_game()
                         self.enemy_level = 0
                         self.level = 0
@@ -112,7 +114,7 @@ class Creator(object):
                     if event.key == K_RETURN or event.key == K_y:
                         self.level += 1
                         self.enemy_level += 1
-                        self.enemy_speed += 1
+                        self.enemy_speed += 2
                         self.run_new_game()
                 if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE) or (
                                 event.type == KEYDOWN and event.key == K_n)):
@@ -250,6 +252,7 @@ class Creator(object):
         pygame.init()
         enemy_can_shoot = True
         enemy_fire_wait = 1500
+        bonus_time = 0
         bullets_array = []
         bonus_array = []
         enemies_matrix = self.generate_enemies()
@@ -263,7 +266,7 @@ class Creator(object):
         # create game window
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-        pygame.display.set_caption('New Game')
+        pygame.display.set_caption('Level ' + str(self.level + 1))
         background = pygame.image.load('Game_Art/levels/' + LEVELS[self.level] + '.png')
         player = Player(400, 650)  # create player class object
 
@@ -271,10 +274,11 @@ class Creator(object):
 
         while loop:
 
-            fire_wait -= CLOCK.tick(60)
-            enemy_fire_wait -= CLOCK.tick(60)
-            bonus_wait -= CLOCK.tick(60)
-            self.player_hit -= CLOCK.tick(60)
+            fire_wait -= 10
+            enemy_fire_wait -= 10
+            bonus_wait -= 10
+            bonus_time -= 10
+            self.player_hit -= 10
             for event in pygame.event.get():
                 if event.type == QUIT:
                     sys.exit(0)
@@ -298,7 +302,7 @@ class Creator(object):
                         bullets_array.append(bullet)
                         can_shoot = False
                 if event.type == KEYUP:
-                    if event.key == K_DOWN:
+                    if event.key == KMOD_CTRL:
                         self.change_y = 0
                         self.change_x = 0
 
@@ -322,7 +326,10 @@ class Creator(object):
                         screen.blit(back, (150, 400))
                         pygame.display.flip()
 
-            player.update(self.change_x, self.change_y)
+            if bonus_time > 0:
+                player.update(self.change_x * self.player_speed, self.change_y * self.player_speed)
+            else:
+                player.update(self.change_x, self.change_y)
 
             if 0 > player.x:
                 player.x = 0
@@ -407,15 +414,18 @@ class Creator(object):
                             enemies.remove(enemy)
                             bullets_array.remove(bullet)
 
-            bonus_number = self.generate_random_bonus()
+
 
             if bonus_wait < 0:
-                bonus = Bonus(self.screen, self.generate_random_coordinates(), 1, BONUS[bonus_number])
+                self.bonus_number = self.generate_random_bonus()
+                print(BONUS[self.bonus_number])
+                bonus = Bonus(self.screen, self.generate_random_coordinates(), 1, BONUS[self.bonus_number])
                 bonus_array.append(bonus)
                 bonus_wait = 3000
 
             for bonus in bonus_array:
                 bonus.update()
+                print(BONUS[self.bonus_number])
                 if bonus.y < 0:
                     bonus_array.remove(bonus)
                 if self.check_collision(bonus.x, bonus.y, player.x, player.y):
@@ -423,10 +433,12 @@ class Creator(object):
                     pygame.mixer.init()
                     pygame.mixer.music.load(file)
                     pygame.mixer.music.play()
-                    if bonus_number == 0:
+                    if BONUS[self.bonus_number] == "Life":
                         self.life += 1
-                    elif bonus_number == 1:
+                    elif BONUS[self.bonus_number] == "Shield":
                         self.player_hit = 2000
+                    elif BONUS[self.bonus_number] == "speed":
+                        bonus_time = 2000
                     bonus_array.remove(bonus)
 
             if not any(enemies_matrix):
