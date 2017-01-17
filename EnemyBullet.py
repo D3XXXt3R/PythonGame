@@ -11,7 +11,7 @@ class EnemyBullet:
         self.image = pygame.image.load('Game_Art/laser.png')
         return
 
-    def update(self, y_amount=5):
+    def update(self, y_amount):
         self.y += y_amount
         self.surface.blit(self.image, (self.x, self.y))
         return
