@@ -14,11 +14,13 @@ HEIGHT = 720
 WIDTH = 1024
 MENU = ("New Game", "Options", "About", "Exit")
 SCORE = 0  # here we count score
-LIFE = 200  # player life
+LIFE = 1  # player life
 ORANGE = (181, 131, 45)
-LEVELS = ("level1", "level2", "level3")
-ENEMIES = ("enemy", "red")
-BONUS = ("Life", "Shield")
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+LEVELS = ("level1", "level2", "level3", "Level4", "Level5")
+ENEMIES = ("enemy", "red", "yellow", "red", "yellow")
+BONUS = ("Life", "Shield", "speed")
 
 
 class Creator(object):
@@ -32,14 +34,14 @@ class Creator(object):
         self.change_y = 0
         self.level = 0
         self.enemy_level = 0
-        self.enemy_speed = 3
+        self.enemy_speed = 4
         self.bonus = 0
 
     def generate_random_coordinates(self):
         return random.randrange(40, WIDTH - 40)
 
     def generate_random_bonus(self):
-        return random.randrange(0, 2)
+        return random.randrange(0, 3)
 
     """generate enemy"""
 
@@ -52,7 +54,7 @@ class Creator(object):
                 points = 20
             else:
                 points = 10
-            enemies = [Enemy(ENEMIES[self.enemy_level], 80 + (50 * x), 50 + (60 * y), points, self.enemy_speed) for x in
+            enemies = [Enemy(ENEMIES[self.enemy_level], 80 + (70 * x), 50 + (60 * y), points, self.enemy_speed) for x in
                        range(11)]
             matrix.append(enemies)
         return matrix
@@ -62,20 +64,19 @@ class Creator(object):
         #     (object1_x > object2_x) and (object1_x < object2_x + 20) and
         #     (object1_y > object2_y) and (object1_y < object2_y)
         # )
-        if self.player_hit <= 0:
-            if object2_x - 35 < object1_x < object2_x + 35 and (object1_y > object2_y) and (object1_y < object2_y + 35):
-                return True
+        if object2_x - 35 < object1_x < object2_x + 35 and (object1_y > object2_y) and (object1_y < object2_y + 35):
+            return True
 
     def game_over_screen(self):
         time.sleep(2)
-        myfont = pygame.font.Font(None, 15)
+        myfont = pygame.font.Font("Game_Art/font.ttf", 28)
         background = pygame.image.load('Game_Art/falling.png')
-        label = myfont.render("Press Y to restart game, N to exit", 1, (255, 0, 0))
-        score = myfont.render("You finished with score: {}".format(self.score), 1, (255, 0, 0))
+        label = myfont.render("Press Y to restart game, N to exit", 1, WHITE)
+        score = myfont.render("You finished with score: {}".format(self.score), 1, WHITE)
         self.screen.fill((0, 0, 0))
         self.screen.blit(background, (0, 0))
-        self.screen.blit(label, (100, 100))
-        self.screen.blit(score, (100, 120))
+        self.screen.blit(label, (250, 300))
+        self.screen.blit(score, (250, 350))
         file = 'Game_Art/Space.flac'
         pygame.mixer.init()
         pygame.mixer.music.load(file)
@@ -86,17 +87,24 @@ class Creator(object):
                 if event.type == KEYDOWN:
                     if event.key == K_RETURN:
                         self.run_new_game()
+                        self.enemy_level = 0
+                        self.level = 0
+                        self.life = 3
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE) or (
                                 event.type == KEYDOWN and event.key == K_n):
                     exit()
 
     def continue_screen(self):
-        myfont = pygame.font.Font(None, 15)
-        label = myfont.render("Press ENTER to continue game", 1, (255, 0, 0))
-        score = myfont.render("Your score: {}".format(self.score), 1, (255, 0, 0))
+        background = pygame.image.load('Game_Art/earth.jpg')
+        myfont = pygame.font.Font("Game_Art/font.ttf", 28)
+        complete = myfont.render("Level " + str(self.enemy_level + 1) + " complete", 40, BLACK)
+        label = myfont.render("Press ENTER to continue game", 1, BLACK)
+        score = myfont.render("Your score: {}".format(self.score), 1, BLACK)
         self.screen.fill((0, 0, 0))
-        self.screen.blit(label, (100, 100))
-        self.screen.blit(score, (100, 120))
+        self.screen.blit(background, (0, 0))
+        self.screen.blit(complete, (300, 200))
+        self.screen.blit(label, (300, 250))
+        self.screen.blit(score, (300, 300))
         pygame.display.flip()
         while True:
             for event in pygame.event.get():
@@ -289,6 +297,10 @@ class Creator(object):
                         bullet = Bullet(screen, player.x, player.y)
                         bullets_array.append(bullet)
                         can_shoot = False
+                if event.type == KEYUP:
+                    if event.key == K_DOWN:
+                        self.change_y = 0
+                        self.change_x = 0
 
                     if not can_shoot and fire_wait <= 0:
                         can_shoot = True
@@ -343,7 +355,7 @@ class Creator(object):
                         enemy.update(screen, 0, 5)
                     elif not moving:
                         dirx = 1
-                    if self.check_collision(player.x, player.y, enemy.x, enemy.y):
+                    if self.check_collision(player.x, player.y, enemy.x, enemy.y) and self.player_hit <= 0:
                         file = 'Game_Art/explosion1.mp3'
                         pygame.mixer.init()
                         pygame.mixer.music.load(file)
@@ -373,7 +385,7 @@ class Creator(object):
                     self.enemies_bullets.remove(enemy_bullet)
 
                 if self.check_collision(enemy_bullet.x, enemy_bullet.y, player.x,
-                                        player.y) and enemy_bullet in self.enemies_bullets:
+                                        player.y) and enemy_bullet in self.enemies_bullets and self.player_hit <= 0:
                     file = 'Game_Art/explosion1.mp3'
                     pygame.mixer.init()
                     pygame.mixer.music.load(file)
@@ -395,11 +407,12 @@ class Creator(object):
                             enemies.remove(enemy)
                             bullets_array.remove(bullet)
 
+            bonus_number = self.generate_random_bonus()
+
             if bonus_wait < 0:
-                bonus_number = self.generate_random_bonus()
                 bonus = Bonus(self.screen, self.generate_random_coordinates(), 1, BONUS[bonus_number])
                 bonus_array.append(bonus)
-                bonus_wait = 500
+                bonus_wait = 3000
 
             for bonus in bonus_array:
                 bonus.update()
@@ -410,7 +423,11 @@ class Creator(object):
                     pygame.mixer.init()
                     pygame.mixer.music.load(file)
                     pygame.mixer.music.play()
-                    self.life += 1
+                    if bonus_number == 0:
+                        self.life += 1
+                    elif bonus_number == 1:
+                        self.player_hit = 2000
+                    bonus_array.remove(bonus)
 
             if not any(enemies_matrix):
                 self.continue_screen()
