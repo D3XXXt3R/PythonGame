@@ -421,7 +421,7 @@ class Creator(object):
                 screen.blit(boss_life, (400, 10))
             screen.blit(score_label, (25, 575))
             if self.player_hit > 0:
-                player.change()
+                player.hit()
             life_label = myfont.render("Life: {}".format(self.life), 1, (255, 0, 0))
             screen.blit(life_label, (900, 575))
 

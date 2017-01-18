@@ -21,7 +21,7 @@ class Player:
         self.y += (change_y * self.speed)
         return
 
-    def change(self):
+    def hit(self):
         s = pygame.Surface((20, 20))
         s.set_alpha(0)
 
